@@ -1,0 +1,32 @@
+tools:
+  - name: list_media_pool
+    description: Walk the media pool folder tree and list the clips held directly in each folder.
+    read_only: true
+    output_schema: {type: object}
+    execution: sync
+    affinity: any
+    input_schema:
+      type: object
+      properties:
+        max_depth:
+          type: integer
+          description: Maximum folder depth to walk from the root. Defaults to all levels.
+          minimum: 1
+      additionalProperties: false
+    source_file: scripts/list_media_pool.py
+
+  - name: list_folder_clips
+    description: List the clips held directly in one named media pool folder.
+    read_only: true
+    output_schema: {type: object}
+    execution: sync
+    affinity: any
+    input_schema:
+      type: object
+      properties:
+        folder:
+          type: string
+          description: Name of the media pool folder. Omit to use the root folder.
+          minLength: 1
+      additionalProperties: false
+    source_file: scripts/list_folder_clips.py

@@ -1,0 +1,12 @@
+tools:
+  - name: project_info
+    description: Report the name, timeline count, frame rate and resolution of the current project.
+    read_only: true
+    output_schema: {type: object}
+    execution: sync
+    affinity: any
+    input_schema:
+      type: object
+      properties: {}
+      additionalProperties: false
+    source_file: scripts/project_info.py

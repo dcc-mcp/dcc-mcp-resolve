@@ -1,0 +1,28 @@
+tools:
+  - name: list_gallery_albums
+    description: List the still albums in the project color gallery.
+    read_only: true
+    output_schema: {type: object}
+    execution: sync
+    affinity: any
+    input_schema:
+      type: object
+      properties: {}
+      additionalProperties: false
+    source_file: scripts/list_gallery_albums.py
+
+  - name: list_gallery_stills
+    description: List the stills in one named gallery album.
+    read_only: true
+    output_schema: {type: object}
+    execution: sync
+    affinity: any
+    input_schema:
+      type: object
+      properties:
+        album:
+          type: string
+          description: Name of the still album. Omit to use the first album.
+          minLength: 1
+      additionalProperties: false
+    source_file: scripts/list_gallery_stills.py

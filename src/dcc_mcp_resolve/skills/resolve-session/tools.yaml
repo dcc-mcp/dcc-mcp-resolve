@@ -1,0 +1,24 @@
+tools:
+  - name: session_info
+    description: Report the Resolve host version, edition, active transport, and adapter identity.
+    read_only: true
+    output_schema: {type: object}
+    execution: sync
+    affinity: any
+    input_schema:
+      type: object
+      properties: {}
+      additionalProperties: false
+    source_file: scripts/session_info.py
+
+  - name: list_projects
+    description: List the projects in the current DaVinci Resolve database.
+    read_only: true
+    output_schema: {type: object}
+    execution: sync
+    affinity: any
+    input_schema:
+      type: object
+      properties: {}
+      additionalProperties: false
+    source_file: scripts/list_projects.py

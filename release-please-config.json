@@ -1,0 +1,21 @@
+{
+  "release-type": "python",
+  "include-v-in-tag": true,
+  "packages": {
+    ".": {
+      "package-name": "dcc-mcp-resolve",
+      "include-component-in-tag": false,
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "extra-files": [
+        "src/dcc_mcp_resolve/__init__.py",
+        "src/dcc_mcp_resolve/__version__.py",
+        "src/dcc_mcp_resolve/skills/resolve-session/SKILL.md",
+        "src/dcc_mcp_resolve/skills/resolve-project/SKILL.md",
+        "src/dcc_mcp_resolve/skills/resolve-media-pool/SKILL.md",
+        "src/dcc_mcp_resolve/skills/resolve-timeline/SKILL.md",
+        "src/dcc_mcp_resolve/skills/resolve-gallery/SKILL.md"
+      ]
+    }
+  }
+}

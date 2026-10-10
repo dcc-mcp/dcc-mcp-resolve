@@ -1,0 +1,62 @@
+tools:
+  - name: list_timelines
+    description: List every timeline in the current project with its track counts.
+    read_only: true
+    output_schema: {type: object}
+    execution: sync
+    affinity: any
+    input_schema:
+      type: object
+      properties: {}
+      additionalProperties: false
+    source_file: scripts/list_timelines.py
+
+  - name: timeline_info
+    description: Report duration, start timecode and track counts for one timeline.
+    read_only: true
+    output_schema: {type: object}
+    execution: sync
+    affinity: any
+    input_schema:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Timeline name. Takes precedence over index when given.
+          minLength: 1
+        index:
+          type: integer
+          description: Zero-based timeline index, used when name is omitted. Defaults to 0.
+          minimum: 0
+      additionalProperties: false
+    source_file: scripts/timeline_info.py
+
+  - name: list_timeline_items
+    description: List the items on one track of one timeline.
+    read_only: true
+    output_schema: {type: object}
+    execution: sync
+    affinity: any
+    input_schema:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Timeline name. Takes precedence over index when given.
+          minLength: 1
+        index:
+          type: integer
+          description: Zero-based timeline index, used when name is omitted. Defaults to 0.
+          minimum: 0
+        track_type:
+          type: string
+          description: Which track kind to read.
+          enum: [video, audio, subtitle]
+          default: video
+        track_index:
+          type: integer
+          description: One-based index within the chosen track type.
+          minimum: 1
+          default: 1
+      additionalProperties: false
+    source_file: scripts/list_timeline_items.py
