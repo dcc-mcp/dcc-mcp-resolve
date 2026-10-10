@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/dcc-mcp/dcc-mcp-resolve/compare/v0.1.0...v0.1.1) (2026-10-10)
+
+
+### Features
+
+* DaVinci Resolve adapter with external and in-process transports ([befd93b](https://github.com/dcc-mcp/dcc-mcp-resolve/commit/befd93bc6dcd5d5231d5e38f31cbd8771d02ed45))
+
 ## 0.1.0 (2026-10-11)
 
 ### Features

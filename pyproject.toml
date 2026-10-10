@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dcc-mcp-resolve"
-version = "0.1.0" # x-release-please-version
+version = "0.1.1" # x-release-please-version
 description = "DaVinci Resolve project, media pool, folder, timeline, timeline item, gallery and deliver inspection for DCC-MCP agents"
 readme = "README.md"
 requires-python = ">=3.7"
