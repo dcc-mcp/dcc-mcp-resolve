@@ -10,8 +10,8 @@ ecosystem, filling the editing-and-finishing gap alongside `dcc-mcp-premiere`,
 
 ## Status
 
-**Alpha.** The adapter ships read-only inspection tools. Host-side behaviour is
-verified on a real Resolve installation and is **not** covered by the current
+**Alpha.** The adapter ships read-only inspection tools. Host-side behaviour requires verification
+on a real Resolve installation and is **not** covered by the current
 host-free CI suite — see [Unverified in CI](#unverified-in-ci).
 
 | | |
@@ -21,23 +21,29 @@ host-free CI suite — see [Unverified in CI](#unverified-in-ci).
 | Python | `>=3.7` (PIP-2519 red line) |
 | Core | `dcc-mcp-core>=0.20.40,<1.0.0` |
 
-## Before you start: the Studio requirement
+## Before you start: edition and Python requirements
 
-**External scripting is a DaVinci Resolve Studio feature from Resolve 19.1
-onward.** The free edition cannot be reached by another process at all. This is
-a licensing boundary in Resolve itself, not a limitation of this adapter, and it
-decides which transport you can use:
+This is a **Python** adapter. Blackmagic's [Resolve 21.1 free-edition release
+notes](https://www.blackmagicdesign.com/support/content/readme/59dd4eef1f4941c29fb8dc48b33f5c87)
+state that Python scripting moved to Studio. Free Resolve 21.1+ therefore has
+**no supported transport in this adapter**, including `in_process`. Any Lua
+capabilities remaining in Resolve are not a Python adapter integration.
 
 | Edition | `external` | `in_process` |
-|---|---|---|
-| Resolve Studio 19.1+ | Yes — full coverage, the primary path | Yes |
-| Free Resolve 19.1+ | **No** | Yes — the only path |
-| Any Resolve ≤ 19.0 | Yes | Yes |
+| --- | --- | --- |
+| Resolve Studio 18.x–21.x | Declared support | Declared support |
+| Free Resolve 18.x–21.0.x | No | Declared legacy path; requires host validation |
+| Free Resolve 21.1+ | No | No: Python requires Studio |
+| Unknown version or edition | Unknown | Unknown |
 
-`dcc-mcp-resolve doctor` reports `host_edition` and
-`external_scripting_allowed` so you can tell a licensing wall apart from a host
-that is simply not running. On the free edition it tells you to switch to
-`in_process` rather than to start Resolve again.
+External scripting already required Studio for 18.6; see the [official
+Blackmagic response](https://forum.blackmagicdesign.com/viewtopic.php?f=21&t=204977).
+It did not become Studio-only in 19.1.
+
+`doctor` reports `external_scripting_allowed`, `python_scripting_allowed`, and
+`transport_supported` only from observed host identity. An unreachable host does
+not establish its edition or version. `null` means unknown, not supported.
+Declared compatibility and host-free CI are not evidence of a real host run.
 
 ## Install
 
@@ -58,7 +64,7 @@ The adapter runs in its own process and connects to a running Resolve through
 the external scripting API.
 
 - Full coverage of the documented API surface; no human click needed to start.
-- **Requires DaVinci Resolve Studio** from Resolve 19.1 onward.
+- **Requires DaVinci Resolve Studio**.
 - Requires `RESOLVE_SCRIPT_API` and `RESOLVE_SCRIPT_LIB` to point at the
   installed `Developer/Scripting` directory and the `fusionscript` library.
 
@@ -73,14 +79,15 @@ dcc-mcp-resolve serve
 The adapter runs *inside* Resolve as a script launched from
 `Workspace > Scripts`, where Resolve injects a `resolve` global.
 
-- The **only** path on the free edition.
+- A declared legacy path on free releases before 21.1 only.
 - Needs a human to launch the script from the menu.
 - Does not cover render/deliver or the colour page the way the external API
   does.
 
 ```bash
-export DCC_MCP_RESOLVE_TRANSPORT=in_process
-dcc-mcp-resolve serve --pid <resolve-pid>
+# Run inside a supported Resolve Python script, not a separate terminal.
+# The bootstrap must expose the host object as builtins.resolve.
+# --pid binds lifetime; it does not inject the host object into another process.
 ```
 
 ## Usage

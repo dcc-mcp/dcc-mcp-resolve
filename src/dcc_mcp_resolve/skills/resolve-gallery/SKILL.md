@@ -28,7 +28,7 @@ is carried between shots or projects.
 ## Constraints
 
 - A real Resolve host must be running and reachable over the selected transport.
-  Gallery access is a color-page surface, so on the free edition it is only
-  reachable through the `in_process` transport.
+  Free releases before 21.1 have a declared `in_process` path requiring host
+  validation. Free 21.1+ cannot run this Python adapter.
 - Album lookup is by exact name. A name that matches nothing is reported as not
   found rather than falling back to the first album.

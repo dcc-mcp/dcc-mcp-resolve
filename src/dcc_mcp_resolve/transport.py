@@ -8,15 +8,15 @@ it is forced by Resolve's own licensing.
     The adapter runs in its own process and connects to a running Resolve over
     the external scripting socket exposed by ``DaVinciResolveScript.scriptapp``.
     This is the primary path and the only one with full read coverage, but
-    **since roughly Resolve 19.1, external scripting is a Studio-only
-    feature** -- the free edition refuses connections from another process.
+    **external scripting is a Studio-only feature** -- the free edition refuses connections from another process.
     It needs ``RESOLVE_SCRIPT_API`` and ``RESOLVE_SCRIPT_LIB`` to point at the
     installed Developer/Scripting directory and the fusionscript library.
 
 ``in_process``
     The adapter runs *inside* Resolve as a script launched from the
     ``Workspace > Scripts`` menu, where a ``resolve`` global is injected. This
-    is the only path available on the free edition. It cannot reach every
+    is a declared legacy path on free releases before 21.1 only. Free 21.1+
+    cannot run this Python adapter. It cannot reach every
     surface: in-app scripts do not cover render/deliver jobs or the color page
     in the same way the external API does, and it needs a human to click the
     script.
@@ -63,8 +63,8 @@ class TransportConfigError(TransportError):
 class EditionNotSupportedError(TransportConfigError):
     """The detected Resolve edition cannot serve the requested transport.
 
-    Raised specifically for the free-edition-on-external-transport case, which
-    is the one configuration failure a user cannot fix by installing anything.
+    Raised when the observed host edition cannot use the requested Python
+    transport. Changing paths or restarting the host cannot remove this gate.
     """
 
 

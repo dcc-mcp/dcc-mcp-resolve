@@ -318,7 +318,8 @@ class TestFreeEditionGate:
     @pytest.fixture(autouse=True)
     def _free_host(self, monkeypatch):
         free_app = _app()
-        # Same host, free edition: the injected global is the only way in.
+        # Legacy free host: retain the pre-21.1 Python path.
+        monkeypatch.setattr(free_app, "GetVersionString", lambda: "21.0.4")
         monkeypatch.setattr(free_app, "GetProductName", lambda: "DaVinci Resolve", raising=False)
         _wire_in_process(monkeypatch, free_app)
 
@@ -331,3 +332,34 @@ class TestFreeEditionGate:
         result = _call("session_info", monkeypatch, capsys)
         assert result["context"]["host_edition"] == "free"
         assert result["context"]["external_scripting_allowed"] is False
+
+
+class TestFree21PythonGate:
+    @pytest.fixture(autouse=True)
+    def _free_host(self, monkeypatch):
+        app = _app()
+        monkeypatch.setattr(app, "GetProductName", lambda: "DaVinci Resolve", raising=False)
+        monkeypatch.setattr(app, "GetVersionString", lambda: "21.1.1")
+        _wire_in_process(monkeypatch, app)
+
+    @pytest.mark.parametrize("script_name", [name for name in SCRIPTS if name != "session_info"])
+    def test_host_operations_fail_with_python_requirement(self, script_name, monkeypatch, capsys):
+        result = _call(script_name, monkeypatch, capsys)
+        assert result["success"] is False
+        assert "Python scripting requires" in result["message"]
+
+    def test_session_reports_unsupported_python(self, monkeypatch, capsys):
+        result = _call("session_info", monkeypatch, capsys)
+        assert result["context"]["python_scripting_allowed"] is False
+        assert result["context"]["transport_supported"] is False
+
+
+@pytest.mark.parametrize("product,version", [("", "21.1"), ("DaVinci Resolve Studio", "unknown")])
+def test_host_operations_do_not_assume_unknown_identity_is_supported(product, version, monkeypatch, capsys):
+    app = _app()
+    monkeypatch.setattr(app, "GetProductName", lambda: product, raising=False)
+    monkeypatch.setattr(app, "GetVersionString", lambda: version)
+    _wire_in_process(monkeypatch, app)
+    result = _call("list_projects", monkeypatch, capsys)
+    assert result["success"] is False
+    assert "support is not established" in result["message"]

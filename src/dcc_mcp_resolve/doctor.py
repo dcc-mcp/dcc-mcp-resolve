@@ -7,13 +7,13 @@ it locally is what keeps the report from drifting when Core republishes the
 artifact (contract rule A002).
 
 The one diagnosis the doctor must get right is the edition gate: the free
-edition of Resolve cannot accept external scripting from Resolve 19.1 onward,
+edition cannot accept external scripting; free 21.1+ cannot use Python at all,
 and failing that case with "start DaVinci Resolve" would send the user after a
 problem that starting Resolve cannot fix.
 """
 
 from . import __version__
-from .runtime import build_report_for, transport_fault_for
+from .runtime import build_report_for, transport_fault_for, transport_support_for
 
 try:  # Core >= 0.20.40, which is this package's declared floor.
     from dcc_mcp_core import install_sop_report_schema_version, validate_install_sop_report
@@ -48,7 +48,7 @@ def core_version():
 
 def _steps(env, edition_fault):
     """Map the readiness checks onto the Install SOP step list."""
-    verify_ok = bool(env["host_version_supported"]) and edition_fault is None and env["python_bitness_ok"]
+    verify_ok = bool(env["host_version_supported"]) and transport_support_for(env) is True and env["python_bitness_ok"]
     return [
         {"id": "install-package", "status": "ok", "description": INSTALL_STEPS[0][1]},
         {
@@ -74,7 +74,10 @@ def _verify_block(env):
     """
     edition_fault = transport_fault_for(env)
     usable = bool(
-        env["host_available"] and env["host_version_supported"] and env["python_bitness_ok"] and edition_fault is None
+        env["host_available"]
+        and env["host_version_supported"]
+        and env["python_bitness_ok"]
+        and transport_support_for(env) is True
     )
     reason = None
     stage = None
@@ -86,6 +89,8 @@ def _verify_block(env):
         stage, reason = "host", "DaVinci Resolve is not reachable over the selected transport"
     elif not env["host_version_supported"]:
         stage, reason = "host", "the running Resolve version is on an unsupported line"
+    elif transport_support_for(env) is None:
+        stage, reason = "verify", "the host version or edition is unknown; transport support is not established"
     elif not env["python_bitness_ok"]:
         stage, reason = "verify", "the scripting API requires a 64-bit Python interpreter"
     return {"directly_usable": usable, "failure_stage": stage, "failure_reason": reason}
@@ -94,7 +99,12 @@ def _verify_block(env):
 def _next_steps(env):
     """Concrete remediation steps, empty when the install is already usable."""
     edition_fault = transport_fault_for(env)
-    if env["host_available"] and env["host_version_supported"] and env["python_bitness_ok"] and edition_fault is None:
+    if (
+        env["host_available"]
+        and env["host_version_supported"]
+        and env["python_bitness_ok"]
+        and transport_support_for(env) is True
+    ):
         return []
     steps = []
     if env.get("transport_error"):
@@ -107,12 +117,28 @@ def _next_steps(env):
             }
         )
     if edition_fault is not None:
+        from .compat import python_scripting_allowed
+
+        python_blocked = python_scripting_allowed(env["host_version"], env["host_product_name"]) is False
         steps.append(
             {
-                "id": "switch-to-in-process",
-                "description": "Use the in_process transport on the free edition",
+                "id": "review-python-requirement" if python_blocked else "switch-to-in-process",
+                "description": (
+                    "Review the Studio requirement: free Resolve 21.1+ cannot run this Python adapter"
+                    if python_blocked
+                    else "Launch the in_process adapter inside this pre-21.1 free Resolve from Workspace > Scripts"
+                ),
                 "why": str(edition_fault),
-                "command": ["dcc-mcp-resolve", "serve", "--transport", "in_process"],
+                "command": ["dcc-mcp-resolve", "doctor"],
+            }
+        )
+    if env["host_available"] and transport_support_for(env) is None:
+        steps.append(
+            {
+                "id": "verify-host-identity",
+                "description": "Verify the host version and edition before claiming transport support",
+                "why": "The adapter could not establish compatibility from the observed host identity.",
+                "command": ["dcc-mcp-resolve", "doctor"],
             }
         )
     if not env["host_available"] and not env.get("transport_error") and edition_fault is None:

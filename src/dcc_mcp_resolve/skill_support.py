@@ -44,6 +44,8 @@ def host_app(transport=None, environ=None):
         raise fault
     if not report["host_available"]:
         return None, report
+    if report["transport_supported"] is None:
+        raise TransportConfigError("Host version or edition is unknown; transport support is not established")
     return resolve_app(report["transport"], environ=environ), report
 
 

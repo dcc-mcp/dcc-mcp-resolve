@@ -17,13 +17,13 @@ class ResolveServer(DccServerBase):
         Started as a standalone service that connects to Resolve over the
         external scripting socket. No host PID is bound, because the adapter
         process owns its own lifetime and Resolve may restart independently.
-        Requires DaVinci Resolve Studio from Resolve 19.1 onward.
+        Requires DaVinci Resolve Studio.
 
     ``in_process``
         Started from a script inside Resolve's ``Workspace > Scripts`` menu,
         where the ``resolve`` global is injected. The host PID is the Resolve
         process and host API calls are dispatched onto Resolve's own thread.
-        This is the only path on the free edition.
+        This is a legacy free-edition path before 21.1 only.
     """
 
     def __init__(self, port=None, dcc_pid=None, dcc_version=None, transport=None, dispatcher=None, **kwargs):
