@@ -197,6 +197,10 @@ def test_legacy_free_external_still_offers_in_process(monkeypatch):
     report = doctor.build_report(EXTERNAL, environ={})
     assert report["verify"]["directly_usable"] is False
     assert "switch-to-in-process" in [step["id"] for step in report["next_steps"]]
+    # The reason and the remedy must agree: a pre-21.1 free host is told to use
+    # in-process, so the failure reason must not claim in-process is blocked.
+    assert "pre-21.1" in report["verify"]["failure_reason"]
+    assert "does not remove this requirement" not in report["verify"]["failure_reason"]
 
 
 @pytest.mark.parametrize("version,product", [("21.1", ""), ("21.bad", STUDIO), ("22.0", STUDIO)])

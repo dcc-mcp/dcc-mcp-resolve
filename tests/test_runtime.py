@@ -154,9 +154,9 @@ class TestHostDetected:
 class TestFreeEditionGate:
     """The one diagnosis the adapter must not get wrong.
 
-    The free edition refuses external connections from Resolve 19.1 onward, so
-    ``host_available`` is false for a licensing reason. Reporting that as an
-    absent host would tell the user to start Resolve, which cannot help.
+    External scripting requires Studio (documented since 18.6), so on the free
+    edition ``host_available`` is false for a licensing reason. Reporting that
+    as an absent host would tell the user to start Resolve, which cannot help.
     """
 
     @pytest.fixture(autouse=True)

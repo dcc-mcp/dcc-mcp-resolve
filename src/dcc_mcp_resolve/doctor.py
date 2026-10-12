@@ -46,7 +46,7 @@ def core_version():
     return getattr(dcc_mcp_core, "__version__", None)
 
 
-def _steps(env, edition_fault):
+def _steps(env):
     """Map the readiness checks onto the Install SOP step list."""
     verify_ok = bool(env["host_version_supported"]) and transport_support_for(env) is True and env["python_bitness_ok"]
     return [
@@ -202,7 +202,7 @@ def build_report(transport=None, environ=None):
         "dcc_type": DCC_TYPE,
         "adapter_version": __version__,
         "core_version": core_version(),
-        "steps": _steps(env, transport_fault_for(env)),
+        "steps": _steps(env),
         "next_steps": _next_steps(env),
         "receipt_path": None,
         "verify": verify,
