@@ -206,3 +206,27 @@ def test_unknown_identity_is_never_directly_usable(monkeypatch, version, product
     assert report["verify"]["directly_usable"] is False
     assert report["environment"]["transport_supported"] is None
     assert report["next_steps"]
+
+
+@pytest.mark.parametrize("version", ["21.bad", "21", "not-a-version"])
+def test_unparseable_version_is_unknown_not_unsupported(monkeypatch, version):
+    """An unreadable version is unknown, not a release line outside the matrix."""
+    monkeypatch.setattr("builtins.resolve", _fake_app(version=version, product=STUDIO), raising=False)
+    report = doctor.build_report(IN_PROCESS, environ={})
+    verify = report["verify"]
+    assert verify["failure_stage"] == "verify"
+    assert "could not be parsed" in verify["failure_reason"]
+    step_ids = [step["id"] for step in report["next_steps"]]
+    assert "upgrade-resolve" not in step_ids
+    assert "verify-host-identity" in step_ids
+
+
+@pytest.mark.parametrize("version", ["22.0", "17.4"])
+def test_parsed_unsupported_version_keeps_upgrade_guidance(monkeypatch, version):
+    """A parsed version outside the matrix stays an unsupported-line diagnosis."""
+    monkeypatch.setattr("builtins.resolve", _fake_app(version=version, product=STUDIO), raising=False)
+    report = doctor.build_report(IN_PROCESS, environ={})
+    verify = report["verify"]
+    assert verify["failure_stage"] == "host"
+    assert "unsupported line" in verify["failure_reason"]
+    assert "upgrade-resolve" in [step["id"] for step in report["next_steps"]]

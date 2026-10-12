@@ -64,6 +64,25 @@ def _steps(env, edition_fault):
     ]
 
 
+def _version_diagnosis(env):
+    """Whether the host version is unrecognized, unsupported, or neither.
+
+    An unparseable version such as ``21.bad`` is *unknown*, not evidence of a
+    release line outside the matrix. Only a version that parses and still falls
+    outside the supported major lines is genuinely unsupported, and only that
+    case should be told to upgrade.
+    """
+    from .compat import is_supported, major_line, parse_version_string
+
+    raw = env.get("host_version")
+    if not is_supported(raw):
+        if parse_version_string(raw)[0] is None:
+            return "unknown"
+        if major_line(raw):
+            return "unsupported"
+    return None
+
+
 def _verify_block(env):
     """Explain why this install is or is not directly usable.
 
@@ -87,6 +106,8 @@ def _verify_block(env):
         stage, reason = "transport", str(edition_fault)
     elif not env["host_available"]:
         stage, reason = "host", "DaVinci Resolve is not reachable over the selected transport"
+    elif _version_diagnosis(env) == "unknown":
+        stage, reason = "verify", "the host version could not be parsed; transport support is not established"
     elif not env["host_version_supported"]:
         stage, reason = "host", "the running Resolve version is on an unsupported line"
     elif transport_support_for(env) is None:
@@ -150,7 +171,7 @@ def _next_steps(env):
                 "command": ["dcc-mcp-resolve", "doctor"],
             }
         )
-    if env["host_available"] and not env["host_version_supported"]:
+    if env["host_available"] and _version_diagnosis(env) == "unsupported":
         steps.append(
             {
                 "id": "upgrade-resolve",
