@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/dcc-mcp/dcc-mcp-resolve/compare/v0.1.1...v0.1.2) (2026-10-17)
+
+
+### Bug Fixes
+
+* respect free Resolve 21.1 Python scripting restriction ([#2](https://github.com/dcc-mcp/dcc-mcp-resolve/issues/2)) ([36ff09c](https://github.com/dcc-mcp/dcc-mcp-resolve/commit/36ff09c5efed77242ab5de02809c3cb8c777396b))
+
 ## [0.1.1](https://github.com/dcc-mcp/dcc-mcp-resolve/compare/v0.1.0...v0.1.1) (2026-10-10)
 
 
