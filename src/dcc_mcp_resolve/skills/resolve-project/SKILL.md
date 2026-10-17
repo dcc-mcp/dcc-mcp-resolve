@@ -27,8 +27,8 @@ project-level settings, which are what a deliver job will render at.
 ## Constraints
 
 - A real Resolve host must be running and reachable over the selected transport.
-  On the free edition that means the `in_process` transport (a script launched
-  from `Workspace > Scripts`).
+  Free releases before 21.1 have a declared `in_process` path (a Python script
+  launched inside Resolve). Free 21.1+ cannot run this Python adapter.
 - Project settings are returned as Resolve reports them; a setting that has
   never been changed from the project default is reported as absent rather than
   guessed at.

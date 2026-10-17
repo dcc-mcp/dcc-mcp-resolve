@@ -18,14 +18,12 @@ README* shipped with the application. It documents the module layout
 `RESOLVE_SCRIPT_LIB`, a Python >= 3.6 64-bit requirement, and support for
 `-nogui` headless operation with the API still available.
 
-From roughly Resolve 19.1, Blackmagic restricts external scripting to the paid
-Studio edition ($295). The free edition cannot be reached from another process
-at all; its only automation path is a Lua or Python script run manually from the
-in-application `Workspace > Scripts` menu, and that path does not reach
-render/deliver or the colour page in the same way.
-
-So the two candidates are not two flavours of the same thing. One is available
-only to paying users, and the other is the only option for everyone else.
+External scripting requires Studio on the supported release lines, including
+18.6 ([official response](https://forum.blackmagicdesign.com/viewtopic.php?f=21&t=204977)).
+[Resolve 21.1 release notes](https://www.blackmagicdesign.com/support/content/readme/59dd4eef1f4941c29fb8dc48b33f5c87)
+add a separate restriction: Python scripting moved to Studio. Both transports
+in this adapter are Python-based, so neither supports free 21.1+. The earlier
+free in-process path remains declared, requiring real-host validation.
 
 ### Candidate A — External scripting (`external`)
 
@@ -35,12 +33,12 @@ only to paying users, and the other is the only option for everyone else.
   `ColorGroup`, plus `Resolve.Fusion()` for Fusion scripting.
 - Runs out of process, so it needs no human click to start and works with
   `-nogui`.
-- Requires Studio from 19.1 onward.
+- Requires Studio.
 - Requires the scripting directory and `fusionscript` library to be discoverable.
 
 ### Candidate B — In-application script (`in_process`)
 
-- The only path on the free edition.
+- A declared legacy path for free releases before 21.1; not free 21.1+.
 - Resolve injects a `resolve` global, so no connection setup is needed.
 - Requires a human to launch the script from `Workspace > Scripts`.
 - Does not cover render/deliver or the colour page as fully as the external API.
@@ -78,9 +76,9 @@ Reasons, in order of weight:
 2. **No human in the loop.** The external transport starts as an ordinary
    service. The in-process transport needs someone to click a menu item every
    time, which is fatal for unattended automation.
-3. **The fallback exists and is honest.** `in_process` is a real, working path
-   for the free edition, not a stub. The adapter detects the edition and says so
-   rather than letting the user discover it as a mysterious connection failure.
+3. **The fallback is version-bounded.** `in_process` retains the legacy path
+   for free releases before 21.1. It must not be offered to free 21.1+ hosts.
+   Unknown identity must remain unknown rather than being marked usable.
 4. **CI cannot cover either.** Both transports need a real host — the external
    one needs a Studio licence, the in-process one a GUI session. That reality is
    recorded in `docs/validation/` rather than disguised as a green CI run.

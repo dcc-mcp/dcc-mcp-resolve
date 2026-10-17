@@ -19,16 +19,16 @@ an error.
 
 ## Pick a transport first
 
-**External scripting is a DaVinci Resolve Studio feature from Resolve 19.1
-onward.** On the free edition, skip to [Transport 2](#transport-2-in-process-scripts):
-the `external` transport cannot work, and no amount of configuration changes
-that.
+External scripting requires **Studio** on the supported release lines. Free
+Resolve before 21.1 has a declared in-process path, requiring host validation.
+**Free Resolve 21.1+ cannot run this Python adapter on either transport.** See
+[Blackmagic's 21.1 notes](https://www.blackmagicdesign.com/support/content/readme/59dd4eef1f4941c29fb8dc48b33f5c87).
+Do not switch transports to work around this version/edition requirement.
 
-The `doctor` output settles it:
-
-- `host_edition` — `studio` or `free`.
-- `external_scripting_allowed` — `true`, `false`, or `null` when the host
-  version could not be read.
+The report includes `host_edition`, `external_scripting_allowed`,
+`python_scripting_allowed`, and `transport_supported`. Unknown identity produces
+`null` capability values, not a positive compatibility claim. An external
+connection returning no object cannot identify a free edition by itself.
 
 ## Transport 1: external scripting (default, Studio)
 
@@ -85,14 +85,16 @@ lifetime, and Resolve may restart independently.
 
 - `transport_error` naming `DaVinciResolveScript.py` — the scripting directory
   was not found. Fix `RESOLVE_SCRIPT_API`.
-- `failure_stage: transport` with a message about **Studio** — you are on the
-  free edition. Use Transport 2, or upgrade to Studio.
+- `failure_stage: transport` with a message about **Studio** — observed host identity
+  identifies an edition restriction. Transport 2 is only a declared alternative
+  for free releases before 21.1; free 21.1+ cannot run this Python adapter.
 - `host_available: false` with no error — Resolve is simply not running, or
   external scripting is disabled in Preferences.
 
 ## Transport 2: in-process scripts
 
-Use this on the free edition, or when you want to run inside the host. The
+Use this on a supported Studio host, or the legacy free-edition path before
+21.1. Free 21.1+ does not support Python scripting. The
 adapter becomes a script launched from Resolve's own Scripts menu, where Resolve
 injects a `resolve` global.
 
@@ -113,12 +115,14 @@ version mismatch produces a clear `doctor` finding rather than an import crash.
 ### 3. Serve
 
 ```bash
-export DCC_MCP_RESOLVE_TRANSPORT=in_process
-dcc-mcp-resolve serve --pid <resolve-pid>
+# Invoke within a supported Resolve Python script, not a separate terminal.
+# Supply the host object as builtins.resolve and bind --pid to the host PID.
 ```
 
 `--pid` is required on this transport: the service's lifetime is bound to the
-Resolve process.
+Resolve process. It does not attach Python to that process or supply its
+`resolve` object. Bootstrap installation and host-thread dispatch require
+separate real-host validation; setting an environment variable is insufficient.
 
 ## Verifying
 

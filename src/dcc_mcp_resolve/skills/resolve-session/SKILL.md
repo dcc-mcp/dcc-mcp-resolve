@@ -18,10 +18,12 @@ Read-only inspection of the DaVinci Resolve instance the adapter is attached to.
 
 Use this skill first when you need to know *which* Resolve you are talking to
 before doing work. The edition matters more here than in any other adapter:
-from Resolve 19.1 onward **external scripting is a Studio-only feature**, so a
+**External scripting is a Studio-only feature**, so a
 free-edition host cannot be reached by the `external` transport at all. This
 skill reports the edition so you can tell a licensing wall apart from a host
-that is simply not running.
+that is simply not running. Free Resolve 21.1+ also lacks Python scripting,
+so neither adapter transport is supported there. Unknown identity remains
+unknown; a failed external probe does not establish an edition.
 
 ## Tools
 

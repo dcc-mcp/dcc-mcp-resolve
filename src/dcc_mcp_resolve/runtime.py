@@ -20,8 +20,10 @@ import sys
 
 from .compat import (
     TARGET_VERSION,
+    external_scripting_allowed,
     is_supported,
     parse_edition,
+    python_scripting_allowed,
 )
 from .transport import (
     ENV_VAR,
@@ -146,6 +148,12 @@ def environment_report(transport=None, environ=None):
         "notes": [],
     }
 
+    report["external_scripting_allowed"] = external_scripting_allowed(version, product)
+    report["python_scripting_allowed"] = python_scripting_allowed(version, product)
+    report["transport_supported"] = transport_support_for(report)
+    edition_fault = transport_fault_for(report)
+    if edition_fault is not None:
+        report["notes"].append(str(edition_fault))
     if transport_error:
         report["notes"].append("Transport misconfigured: %s" % transport_error)
     elif not report["host_available"]:
@@ -161,9 +169,11 @@ def environment_report(transport=None, environ=None):
         report["notes"].append("The running Resolve version is outside the supported major lines (18-21).")
     if chosen != IN_PROCESS:
         report["notes"].append(
-            "External scripting requires DaVinci Resolve Studio from Resolve 19.1 onward; "
-            "the free edition must use the in_process transport."
+            "External scripting requires DaVinci Resolve Studio. Free Resolve before 21.1 "
+            "has a declared in_process path; free Resolve 21.1+ does not support this Python adapter."
         )
+    if chosen == IN_PROCESS:
+        report["notes"].append("Python scripting requires DaVinci Resolve Studio from Resolve 21.1 onward.")
     report["notes"].append(
         "The current CI suite is host-free; host-side behaviour requires separate validation "
         "against a running DaVinci Resolve."
@@ -185,32 +195,32 @@ def external_scripting_expected_to_work(report):
     return external_scripting_allowed(report["host_version"], report["host_product_name"])
 
 
+def transport_support_for(report):
+    """Return declared support, keeping unknown host identity as None."""
+    check = python_scripting_allowed if report["transport"] == IN_PROCESS else external_scripting_allowed
+    return check(report["host_version"], report["host_product_name"])
+
+
 def edition_blocks_transport(report):
-    """Whether the detected edition cannot serve the report's transport.
-
-    Returns ``False`` for anything other than the one hard case: the external
-    transport against a free-edition host on a release line where external
-    scripting is Studio-only.
-    """
-    from .compat import external_scripting_allowed
-
-    if report["transport"] == IN_PROCESS or report["host_version"] is None:
-        return False
-    return external_scripting_allowed(report["host_version"], report["host_product_name"]) is False
+    """Whether reliable version/edition evidence identifies a licensing gate."""
+    return transport_support_for(report) is False
 
 
 def transport_fault_for(report):
-    """A :class:`TransportConfigError` for an edition/transport mismatch.
-
-    Returns ``None`` when the pairing is fine. Used by the doctor to convert a
-    silently unreachable host into an actionable, staged failure.
-    """
+    """Explain a known edition mismatch without inventing absent-host data."""
     if not edition_blocks_transport(report):
         return None
+    if python_scripting_allowed(report["host_version"], report["host_product_name"]) is False:
+        return EditionNotSupportedError(
+            "Resolve 21.1+ Python scripting requires DaVinci Resolve Studio; "
+            "this free-edition host cannot use either Python adapter transport. "
+            "Switching to in_process does not remove this requirement."
+        )
     return EditionNotSupportedError(
-        "external scripting requires DaVinci Resolve Studio from Resolve 19.1 onward; "
-        "this host reports %r. Use the in_process transport (Workspace > Scripts) on the "
-        "free edition, or set %s=%s" % (report["host_product_name"], ENV_VAR, IN_PROCESS)
+        "external scripting requires DaVinci Resolve Studio; this host reports %r. "
+        "On this pre-21.1 free edition, launch the in_process adapter inside Resolve "
+        "from Workspace > Scripts; a separate terminal process cannot use the injected global."
+        % report["host_product_name"]
     )
 
 
@@ -240,8 +250,13 @@ def build_report_for(transport=None, environ=None):
             report["notes"] = [
                 "Detected through the in-process probe: this host is running but did not "
                 "answer an external scripting connection.",
-                "External scripting is a DaVinci Resolve Studio feature from Resolve 19.1 "
-                "onward, so a free-edition host never answers it. A missing scripting "
+                "External scripting is a DaVinci Resolve Studio feature, "
+                "so a free-edition host never answers it. A missing scripting "
                 "directory is a different fault and is reported separately.",
             ] + probe["notes"]
+    report["external_scripting_allowed"] = external_scripting_allowed(
+        report["host_version"], report["host_product_name"]
+    )
+    report["python_scripting_allowed"] = python_scripting_allowed(report["host_version"], report["host_product_name"])
+    report["transport_supported"] = transport_support_for(report)
     return report

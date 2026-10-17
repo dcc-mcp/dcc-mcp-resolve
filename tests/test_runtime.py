@@ -117,9 +117,9 @@ def test_report_states_the_studio_requirement_on_external():
     assert any("Studio" in note for note in notes)
 
 
-def test_report_does_not_claim_studio_requirement_on_in_process():
+def test_report_explains_versioned_python_requirement_on_in_process():
     notes = environment_report(IN_PROCESS, environ={})["notes"]
-    assert not any("Studio" in note for note in notes)
+    assert any("21.1" in note and "Studio" in note for note in notes)
 
 
 class TestHostDetected:
@@ -154,9 +154,9 @@ class TestHostDetected:
 class TestFreeEditionGate:
     """The one diagnosis the adapter must not get wrong.
 
-    The free edition refuses external connections from Resolve 19.1 onward, so
-    ``host_available`` is false for a licensing reason. Reporting that as an
-    absent host would tell the user to start Resolve, which cannot help.
+    External scripting requires Studio (documented since 18.6), so on the free
+    edition ``host_available`` is false for a licensing reason. Reporting that
+    as an absent host would tell the user to start Resolve, which cannot help.
     """
 
     @pytest.fixture(autouse=True)
@@ -192,7 +192,7 @@ class TestFreeEditionGate:
         assert IN_PROCESS in message
 
     def test_free_edition_on_in_process_is_not_blocked(self, monkeypatch):
-        monkeypatch.setattr("builtins.resolve", _fake_app(product=FREE), raising=False)
+        monkeypatch.setattr("builtins.resolve", _fake_app(version="21.0", product=FREE), raising=False)
         report = environment_report(IN_PROCESS)
         assert edition_blocks_transport(report) is False
         assert transport_fault_for(report) is None
@@ -239,3 +239,23 @@ def test_unsupported_version_is_reported(monkeypatch, tmp_path):
     report = environment_report(EXTERNAL)
     assert report["host_version_supported"] is False
     assert any("outside the supported" in note for note in report["notes"])
+
+
+@pytest.mark.parametrize("transport", [IN_PROCESS, EXTERNAL])
+def test_free_21_1_reports_python_gate_from_known_identity(monkeypatch, transport):
+    monkeypatch.setattr("builtins.resolve", _fake_app(product=FREE), raising=False)
+    report = environment_report(IN_PROCESS)
+    report["transport"] = transport
+    assert report["python_scripting_allowed"] is False
+    assert report["external_scripting_allowed"] is False
+    assert edition_blocks_transport(report) is True
+    assert "cannot use either Python" in str(transport_fault_for(report))
+
+
+def test_absent_host_does_not_invent_edition_or_capabilities(monkeypatch):
+    monkeypatch.delattr("builtins.resolve", raising=False)
+    report = environment_report(IN_PROCESS, environ={})
+    assert report["host_edition"] is None
+    assert report["transport_supported"] is None
+    assert report["python_scripting_allowed"] is None
+    assert report["external_scripting_allowed"] is None

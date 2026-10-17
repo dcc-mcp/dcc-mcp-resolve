@@ -29,18 +29,17 @@ Use the `dev` extra for the lint, build and distribution gates.
 
 ## The one thing to know before editing
 
-**External scripting is a DaVinci Resolve Studio feature from Resolve 19.1
-onward.** The free edition refuses connections from another process. That single
-licensing fact is why this adapter has two transports and why `doctor` reports
-the host edition. Three consequences:
+**External scripting requires Studio. Python scripting also requires Studio
+from Resolve 21.1 onward**, including `in_process`. See the official 21.1 notes
+linked in `README.md`. Free 18.x–21.0.x keeps its declared in-process path;
+free 21.1+ has no supported Python transport in this adapter.
 
-1. Never report a free-edition host on the `external` transport as "Resolve is
-   not reachable" — the user cannot fix that by starting Resolve. The doctor
-   stages it as `transport` with a `switch-to-in-process` next step.
-2. `compat.external_scripting_allowed()` returns `None` (unknown), not `False`,
-   when the host version cannot be parsed. Do not flatten that into a negative.
+1. Diagnose observed edition restrictions as `transport` failures. Never
+   recommend switching free 21.1+ to `in_process` or merely restarting Resolve.
+2. Unknown version or edition means unknown compatibility, never usable. An
+   unreachable host is not proof of a specific edition.
 3. Nothing may import a host module at import time. A machine without Resolve
-   installed must still be able to `pip install` and run `doctor`.
+   installed must still be able to install the package and run `doctor`.
 
 CI does not launch Resolve. Tests needing a live host are marked `resolve` and
 skipped by default. Do not write a test that silently passes without a host:
@@ -69,9 +68,9 @@ Two transports, selected by `DCC_MCP_RESOLVE_TRANSPORT`:
 
 - `external` (default) — standalone process connecting over the external
   scripting socket. **Must not receive `--pid`.** Requires
-  `RESOLVE_SCRIPT_API` / `RESOLVE_SCRIPT_LIB`, and **Studio** from 19.1.
+  `RESOLVE_SCRIPT_API` / `RESOLVE_SCRIPT_LIB`, and **Studio**.
 - `in_process` — runs inside Resolve as a script from `Workspace > Scripts`.
-  **Requires `--pid`.** The only path on the free edition; needs a human to
+  **Requires `--pid`.** A legacy free-edition path before 21.1 only; needs a human to
   launch it and does not cover render/deliver or the colour page fully.
 
 The server constructor enforces the pairing, so a mismatch fails loudly rather
